@@ -10,9 +10,14 @@ Next.js 프로젝트를 위한 완전한 보일러플레이트입니다. TypeScr
 - **ESLint** - 코드 품질 관리
 - **Bun** - 빠른 패키지 매니저
 - **재사용 컴포넌트** - Button, Input, Card 등
+- **레이아웃 컴포넌트** - Header, Footer, Sidebar
 - **유틸리티 함수** - 날짜 포맷, 디바운스, 스로틀 등
 - **커스텀 훅** - 로컬 스토리지, 디바운스 등
 - **타입 정의** - 공통 인터페이스들
+- **상태 관리** - Zustand 기반 전역 상태
+- **API 클라이언트** - Axios 기반 HTTP 클라이언트
+- **폼 관리** - React Hook Form + Zod 검증
+- **유효성 검사** - Yup 스키마 검증
 
 ## 📁 프로젝트 구조
 
@@ -27,19 +32,36 @@ nextjs-boilerplate/
 │   ├── ui/                # 기본 UI 컴포넌트
 │   │   ├── Button.tsx     # 버튼 컴포넌트
 │   │   ├── Input.tsx      # 입력 컴포넌트
-│   │   └── Card.tsx       # 카드 컴포넌트
+│   │   ├── Card.tsx       # 카드 컴포넌트
+│   │   └── index.ts       # UI 컴포넌트 export
 │   ├── layout/            # 레이아웃 컴포넌트
-│   └── common/            # 공통 컴포넌트
-├── lib/                   # 유틸리티 함수
-│   └── utils.ts           # 클래스명 결합, 날짜 포맷 등
+│   │   ├── Header.tsx     # 헤더 컴포넌트
+│   │   ├── Footer.tsx     # 푸터 컴포넌트
+│   │   ├── Sidebar.tsx    # 사이드바 컴포넌트
+│   │   └── index.ts       # 레이아웃 컴포넌트 export
+│   ├── common/            # 공통 컴포넌트
+│   │   ├── HeroSection.tsx # 히어로 섹션
+│   │   ├── DemoForm.tsx   # 데모 폼
+│   │   └── index.ts       # 공통 컴포넌트 export
+│   └── index.ts           # 모든 컴포넌트 export
+├── lib/                   # 핵심 라이브러리
+│   ├── utils.ts           # 기본 유틸리티 (clsx, debounce, throttle 등)
+│   ├── api.ts             # Axios 기반 API 클라이언트
+│   └── store.ts           # Zustand 상태 관리
+├── utils/                 # 추가 유틸리티
+│   ├── validation.ts      # Yup 기반 유효성 검사
+│   ├── date.ts            # date-fns 기반 날짜 유틸리티
+│   └── index.ts           # 유틸리티 export
 ├── hooks/                 # 커스텀 훅
 │   ├── useLocalStorage.ts # 로컬 스토리지 훅
-│   └── useDebounce.ts     # 디바운스 훅
+│   ├── useDebounce.ts     # 디바운스 훅
+│   └── index.ts           # 훅 export
 ├── types/                 # 타입 정의
 │   └── common.ts          # 공통 인터페이스
 ├── constants/             # 상수 정의
 │   └── index.ts           # 앱 설정, API 엔드포인트 등
 ├── public/                # 정적 파일들
+├── LICENSE                # MIT 라이센스
 └── package.json           # 프로젝트 설정
 ```
 
@@ -71,49 +93,25 @@ bun run start
 
 ## 🎨 컴포넌트 사용법
 
-### Button 컴포넌트
+### UI 컴포넌트
 
 ```tsx
-import Button from '@/components/ui/Button';
+import { Button, Input, Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui';
 
-// 기본 사용법
-<Button>클릭하세요</Button>
+// Button 컴포넌트
+<Button variant="primary" size="lg" onClick={handleClick}>
+  클릭하세요
+</Button>
 
-// 변형과 크기
-<Button variant="outline" size="lg">큰 아웃라인 버튼</Button>
-
-// 로딩 상태
-<Button isLoading>제출 중...</Button>
-```
-
-### Input 컴포넌트
-
-```tsx
-import Input from '@/components/ui/Input';
-
-// 기본 사용법
-<Input placeholder="이름을 입력하세요" />
-
-// 라벨과 도움말
+// Input 컴포넌트
 <Input 
   label="이메일" 
   type="email" 
+  placeholder="이메일을 입력하세요"
   helperText="실제 이메일을 입력해주세요"
 />
 
-// 에러 상태
-<Input 
-  label="비밀번호" 
-  type="password" 
-  error="비밀번호는 8자 이상이어야 합니다"
-/>
-```
-
-### Card 컴포넌트
-
-```tsx
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card';
-
+// Card 컴포넌트
 <Card>
   <CardHeader>
     <CardTitle>카드 제목</CardTitle>
@@ -128,35 +126,39 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 </Card>
 ```
 
-## 🔧 유틸리티 함수
-
-### 클래스명 결합
+### 레이아웃 컴포넌트
 
 ```tsx
-import { cn } from '@/lib/utils';
+import { Header, Footer, Sidebar } from '@/components/layout';
 
+// 메인 레이아웃
+<div className="min-h-screen">
+  <Header />
+  <div className="flex">
+    <Sidebar />
+    <main className="flex-1">
+      {/* 페이지 내용 */}
+    </main>
+  </div>
+  <Footer />
+</div>
+```
+
+## 🔧 유틸리티 함수
+
+### 기본 유틸리티
+
+```tsx
+import { cn, debounce, throttle, formatDate, formatDateTime } from '@/lib/utils';
+
+// 클래스명 결합
 const className = cn(
   'base-class',
   condition && 'conditional-class',
   'another-class'
 );
-```
 
-### 날짜 포맷
-
-```tsx
-import { formatDate, formatDateTime } from '@/lib/utils';
-
-const date = new Date();
-formatDate(date);      // "2024년 8월 14일"
-formatDateTime(date);  // "2024년 8월 14일 오후 11시 37분"
-```
-
-### 디바운스/스로틀
-
-```tsx
-import { debounce, throttle } from '@/lib/utils';
-
+// 디바운스/스로틀
 const debouncedSearch = debounce((query: string) => {
   // 검색 로직
 }, 300);
@@ -164,25 +166,80 @@ const debouncedSearch = debounce((query: string) => {
 const throttledScroll = throttle(() => {
   // 스크롤 로직
 }, 100);
+
+// 날짜 포맷
+formatDate(new Date());      // "2024년 8월 14일"
+formatDateTime(new Date());  // "2024년 8월 14일 오후 11시 37분"
+```
+
+### 유효성 검사
+
+```tsx
+import { emailSchema, passwordSchema, loginSchema } from '@/utils/validation';
+
+// 개별 스키마
+const isValidEmail = emailSchema.validateSync('user@example.com');
+
+// 폼 스키마
+const formData = { email: 'user@example.com', password: 'password123' };
+const result = loginSchema.validateSync(formData);
+```
+
+### 날짜 유틸리티
+
+```tsx
+import { formatRelativeTime, formatRelativeDate, calculateAge } from '@/utils/date';
+
+formatRelativeTime(new Date());     // "방금 전"
+formatRelativeDate(new Date());     // "오늘"
+calculateAge(new Date('1990-01-01')); // 34
 ```
 
 ## 🎯 커스텀 훅
 
-### 로컬 스토리지 훅
-
 ```tsx
-import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useLocalStorage, useDebounce } from '@/hooks';
 
+// 로컬 스토리지 훅
 const [theme, setTheme] = useLocalStorage('theme', 'light');
-```
 
-### 디바운스 훅
-
-```tsx
-import { useDebounce } from '@/hooks/useDebounce';
-
+// 디바운스 훅
 const [searchTerm, setSearchTerm] = useState('');
 const debouncedSearchTerm = useDebounce(searchTerm, 500);
+```
+
+## 📡 API 클라이언트
+
+```tsx
+import { api } from '@/lib/api';
+
+// GET 요청
+const users = await api.get<User[]>('/users');
+
+// POST 요청
+const newUser = await api.post<User>('/users', userData);
+
+// PUT 요청
+const updatedUser = await api.put<User>(`/users/${id}`, updateData);
+
+// DELETE 요청
+await api.delete(`/users/${id}`);
+```
+
+## 🔄 상태 관리
+
+```tsx
+import { useAppStore, useUser, useTheme } from '@/lib/store';
+
+// 전체 스토어 사용
+const { user, login, logout } = useAppStore();
+
+// 선택적 상태 사용 (성능 최적화)
+const user = useUser();
+const theme = useTheme();
+
+// 액션 사용
+const { login, toggleTheme, updateSettings } = useAppStore();
 ```
 
 ## 🌟 추가 기능
@@ -191,10 +248,38 @@ const debouncedSearchTerm = useDebounce(searchTerm, 500);
 - **반응형 디자인** - 모바일부터 데스크톱까지 최적화
 - **접근성** - ARIA 라벨과 키보드 네비게이션 지원
 - **성능 최적화** - Next.js 15의 최신 기능 활용
+- **타입 안전성** - TypeScript로 완벽한 타입 체크
+- **폼 검증** - React Hook Form + Zod로 강력한 폼 관리
+- **상태 지속성** - Zustand persist로 페이지 새로고침 시에도 상태 유지
+
+## 📦 주요 의존성
+
+### 핵심 라이브러리
+- **Next.js 15** - React 프레임워크
+- **React 19** - UI 라이브러리
+- **TypeScript 5** - 타입 시스템
+
+### 스타일링
+- **Tailwind CSS 4** - CSS 프레임워크
+- **clsx** - 클래스명 결합
+- **tailwind-merge** - Tailwind 클래스 병합
+
+### 상태 관리 & 데이터
+- **Zustand** - 상태 관리
+- **Axios** - HTTP 클라이언트
+- **React Hook Form** - 폼 관리
+
+### 유효성 검사
+- **Zod** - 스키마 검증
+- **Yup** - 폼 검증
+
+### 유틸리티
+- **date-fns** - 날짜 처리
+- **lucide-react** - 아이콘
 
 ## 📝 라이선스
 
-MIT License
+MIT License - 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
 
 ## 🤝 기여하기
 
@@ -207,3 +292,7 @@ MIT License
 ## 📞 문의
 
 프로젝트에 대한 질문이나 제안사항이 있으시면 이슈를 생성해주세요.
+
+---
+
+**Next.js Boilerplate** - 현대적이고 효율적인 웹 개발을 위한 완벽한 시작점 🚀
